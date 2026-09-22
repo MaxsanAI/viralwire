@@ -5,7 +5,7 @@ import {getPublishedStories} from "../lib/db";
 import NewsTicker from "../components/NewsTicker.astro";
 
 const {title=SITE_NAME,description=SITE_TAGLINE,image,canonical,noindex=false}=Astro.props;
-const site=Astro.locals.runtime?.env?.SITE_URL||"https://viralwire.pages.dev";
+const site=Astro.locals.runtime?.env?.SITE_URL||"https://viralwire.pulserapp.com";
 const locale=getLocale(Astro.locals);
 const path=Astro.url.pathname;
 const pathParts=path.split("/").filter(Boolean);
@@ -26,7 +26,7 @@ const tickerStories=await getPublishedStories(Astro.locals,12);
 <title>{pageTitle}</title><meta name="description" content={description}>
 {noindex&&<meta name="robots" content="noindex,nofollow">}<link rel="canonical" href={canonicalUrl}>
 {langAlternates.map(a=><link rel="alternate" hreflang={a.code} href={a.url}/>)}
-<link rel="alternate" hreflang="x-default" href={absoluteUrl(path,site)}/>
+<link rel="alternate" hreflang="x-default" href={absoluteUrl(basePath,site)}/>
 <meta property="og:type" content="website"><meta property="og:site_name" content={SITE_NAME}><meta property="og:title" content={pageTitle}><meta property="og:description" content={description}><meta property="og:url" content={canonicalUrl}>
 {imageUrl&&<><meta property="og:image" content={imageUrl}><meta property="og:image:alt" content={pageTitle}></>}<meta name="twitter:card" content={imageUrl?"summary_large_image":"summary"}><meta name="twitter:title" content={pageTitle}><meta name="twitter:description" content={description}>{imageUrl&&<meta name="twitter:image" content={imageUrl}>}
 <link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="alternate" type="application/rss+xml" title="VIRALWIRE RSS" href="/rss.xml">
