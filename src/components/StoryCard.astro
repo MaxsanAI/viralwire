@@ -1,5 +1,7 @@
 ---
 import {formatDate,readingTime} from "../lib/site";
+import {getLocale,localePath} from "../lib/i18n";
 const {story}=Astro.props;
+const locale=getLocale(Astro.locals);
 ---
-<a class="tile" href={"/story/"+story.slug}><img src={story.cover_image} alt={story.title} loading="lazy"><div class="tile-body"><div class="meta"><span class="pill">{story.category}</span><span>{formatDate(story.published_at)}</span><span>{readingTime(story.content)} min</span></div><h3>{story.title}</h3><p>{story.excerpt}</p></div></a>
+<a class="tile" href={localePath(locale,"/story/"+story.slug)}><img src={story.cover_image} alt={story.title} loading="lazy"><div class="tile-body"><div class="meta"><span class="pill">{story.category}</span><span>{formatDate(story.published_at)}</span><span>{readingTime(story.content)} min</span></div><h3>{story.title}</h3><p>{story.excerpt}</p></div></a>
