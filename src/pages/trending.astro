@@ -1,0 +1,7 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Monetag from "../components/Monetag.astro";
+import {getPublishedStories} from "../lib/db";
+const stories=(await getPublishedStories(Astro.locals,30)).sort((a,b)=>b.views-a.views);
+---
+<Layout title="Trending Now" description="The stories getting attention across the VIRALWIRE feed."><section class="wrap section"><div class="eyebrow">VIRALWIRE LIVE FEED</div><h1 style="font-family:'Space Grotesk';font-size:clamp(42px,7vw,76px);letter-spacing:-3px;margin:10px 0 12px">Trending now.</h1><p class="muted" style="max-width:680px;line-height:1.7">A rolling view of the stories drawing the most attention on VIRALWIRE. Rankings are based on story views when analytics are available.</p><div style="margin-top:28px">{stories.map((s,i)=><a class="trend-row" href={"/story/"+s.slug}><div class="rank">{String(i+1).padStart(2,"0")}</div><div><div class="meta"><span class="pill">{s.category}</span></div><h3>{s.title}</h3><p>{s.excerpt}</p></div><div class="views">{s.views.toLocaleString()} views</div></a>)}</div></section><Monetag /></Layout>
