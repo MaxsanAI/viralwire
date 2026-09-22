@@ -1,0 +1,2 @@
+import type {APIRoute} from "astro";
+export const POST:APIRoute=async({request,cookies,locals,redirect})=>{const form=await request.formData();const password=String(form.get("password")||"");const expected=locals.runtime?.env?.ADMIN_PASSWORD||"";if(!expected||password!==expected)return redirect("/admin/login?error=1");cookies.set("vw_admin","1",{httpOnly:true,secure:true,sameSite:"lax",path:"/",maxAge:604800});return redirect("/admin")};
