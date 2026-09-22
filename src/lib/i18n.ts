@@ -94,7 +94,7 @@ export function t(locals:App.Locals,key:string):string {
 export function localizePath(locale:Locale,path:string):string {
   const clean=path.startsWith("/")?path:"/"+path;
   if(locale==="en") return clean;
-  return "/"+locale+(clean===" /" ? "/" : clean);
+  return "/"+locale+clean;
 }
 
 export function localePath(locale:Locale,path:string):string {
