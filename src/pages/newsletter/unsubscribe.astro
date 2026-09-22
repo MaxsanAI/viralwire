@@ -1,0 +1,6 @@
+---
+import Layout from "../../layouts/Layout.astro";import {ensureNewsletterTables} from "../../lib/newsletter";
+const token=String(Astro.url.searchParams.get("token")||"");let ok=false;let message="This unsubscribe link is invalid.";const db=Astro.locals.runtime?.env?.DB;
+if(db&&token)try{await ensureNewsletterTables(db);const r=await db.prepare("SELECT id FROM newsletter_subscribers WHERE confirmation_token=? LIMIT 1").bind(token).first<any>();if(r){await db.prepare("UPDATE newsletter_subscribers SET status='unsubscribed',unsubscribed_at=?,confirmation_token=NULL WHERE id=?").bind(new Date().toISOString(),r.id).run();ok=true;message="You've been unsubscribed from the VIRALWIRE Drop.";}}catch{}
+---
+<Layout title="Unsubscribe — VIRALWIRE" noindex><section class="wrap section" style="min-height:55vh;display:grid;place-items:center"><div class="panel" style="width:min(620px,100%);text-align:center;padding:42px"><div class="eyebrow">THE VIRALWIRE DROP</div><h1 style="font-family:'Space Grotesk';font-size:clamp(34px,6vw,58px);letter-spacing:-2px;margin:12px 0">{ok?"You're unsubscribed.":"Unsubscribe."}</h1><p class="muted" style="line-height:1.7">{message}</p><a class="btn" href="/">BACK TO VIRALWIRE</a></div></section></Layout>
