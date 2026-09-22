@@ -5,5 +5,88 @@ import {getPublishedStories} from "../lib/db";
 import {getLocale,localePath,t} from "../lib/i18n";
 const locale=getLocale(Astro.locals);
 const stories=(await getPublishedStories(Astro.locals,30)).sort((a,b)=>b.views-a.views);
+const top=stories.slice(0,5);
+const rest=stories.slice(5);
 ---
-<Layout title={t(Astro.locals,"trending")} description={t(Astro.locals,"trendingDesc")}><section class="wrap section"><div class="eyebrow">VIRALWIRE LIVE FEED</div><h1 style="font-family:'Space Grotesk';font-size:clamp(42px,7vw,76px);letter-spacing:-3px;margin:10px 0 12px">Trending now.</h1><p class="muted" style="max-width:680px;line-height:1.7">{t(Astro.locals,"trendingIntro")}</p><div style="margin-top:28px">{stories.map((s,i)=><a class="trend-row" href={localePath(locale,"/story/"+s.slug)}><div class="rank">{String(i+1).padStart(2,"0")}</div><div><div class="meta"><span class="pill">{s.category}</span></div><h3>{s.title}</h3><p>{s.excerpt}</p></div><div class="views">{s.views.toLocaleString()} {t(Astro.locals,"views")}</div></a>)}</div></section><Monetag /></Layout>
+<Layout title={t(Astro.locals,"trending")} description={t(Astro.locals,"trendingDesc")}>
+<section class="wrap section">
+  <div class="eyebrow">VIRALWIRE LIVE FEED</div>
+  <h1 style="font-family:'Space Grotesk';font-size:clamp(42px,7vw,76px);letter-spacing:-3px;margin:10px 0 12px">Trending now.</h1>
+  <p class="muted" style="max-width:680px;line-height:1.7">{t(Astro.locals,"trendingIntro")}</p>
+
+  {top.length>0 && (
+    <div class="trending-feature">
+      {top.map((s,i)=>
+        <a class="trending-feature-card" href={localePath(locale,"/story/"+s.slug)}>
+          <div class="trending-feature-rank">{String(i+1).padStart(2,"0")}</div>
+          <div class="trending-feature-body">
+            <div class="meta"><span class="pill">{s.category}</span><span>{s.views.toLocaleString()} {t(Astro.locals,"views")}</span></div>
+            <h2>{s.title}</h2>
+            <p>{s.excerpt}</p>
+          </div>
+          <img src={s.cover_image} alt={s.title} loading="lazy">
+        </a>
+      )}
+    </div>
+  )}
+
+  {rest.length>0 && (
+    <div class="trending-list">
+      {rest.map((s,i)=>
+        <a class="trend-row" href={localePath(locale,"/story/"+s.slug)}>
+          <div class="rank">{String(i+6).padStart(2,"0")}</div>
+          <div><div class="meta"><span class="pill">{s.category}</span></div><h3>{s.title}</h3><p>{s.excerpt}</p></div>
+          <div class="views">{s.views.toLocaleString()} {t(Astro.locals,"views")}</div>
+        </a>
+      )}
+    </div>
+  )}
+
+  <section class="retention-newsletter compact-newsletter">
+    <div class="newsletter-card">
+      <div class="newsletter-copy">
+        <div class="eyebrow">THE VIRALWIRE DROP</div>
+        <h2>Stay ahead of the feed.</h2>
+        <p>Get the stories everyone will be talking about next.</p>
+      </div>
+      <form class="newsletter-form" data-newsletter-form>
+        <label for="newsletter-email-trending">Email address</label>
+        <div class="newsletter-input-row">
+          <input id="newsletter-email-trending" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+          <button class="btn primary" type="submit">GET THE DROP</button>
+        </div>
+        <input class="newsletter-honeypot" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="newsletter-status" data-newsletter-status aria-live="polite"></div>
+      </form>
+    </div>
+  </section>
+</section>
+<Monetag />
+</Layout>
+
+<script>
+document.querySelectorAll("[data-newsletter-form]").forEach((form)=>{
+  form.addEventListener("submit",async(e)=>{
+    e.preventDefault();
+    const f=form;
+    const button=f.querySelector("button");
+    const status=f.querySelector("[data-newsletter-status]");
+    const data=new FormData(f);
+    button.disabled=true;
+    button.textContent="JOINING…";
+    status.textContent="";
+    try{
+      const r=await fetch("/api/newsletter/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:data.get("email"),website:data.get("website")})});
+      const j=await r.json();
+      if(!r.ok) throw new Error(j.error||"Something went wrong.");
+      status.textContent=j.message||"You're in. Watch your inbox.";
+      f.reset();
+    }catch(err){
+      status.textContent=err instanceof Error?err.message:"Something went wrong. Please try again.";
+    }finally{
+      button.disabled=false;
+      button.textContent="GET THE DROP";
+    }
+  });
+});
+</script>
