@@ -74,7 +74,7 @@ html[data-theme="light"] .theme-toggle .moon{display:none}html[data-theme="light
   </div>
 </header>
 <main><slot /></main>
-<footer class="footer"><div class="wrap footer-grid"><div><strong style="color:var(--text)">VIRALWIRE</strong><br>{SITE_TAGLINE}</div><div><a href={localePath(locale,"/trending")}>{t(Astro.locals,"trending")}</a> · <a href="/rss.xml">RSS</a> · <a href="/admin">Admin</a></div></div></footer>
+<footer class="footer"><div class="wrap footer-grid"><div><strong style="color:var(--text)">VIRALWIRE</strong><br>{SITE_TAGLINE}</div><div><a href={localePath(locale,"/trending")}>{t(Astro.locals,"trending")}</a> · <a href="/rss.xml">RSS</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/disclaimer">Disclaimer</a> · <a href="/cookies">Cookies</a> · <a href="/admin">Admin</a></div></div></footer>
 <div id="cookie-banner" class="cookie-banner" hidden><div><strong>We use cookies</strong><p>VIRALWIRE uses essential cookies for site functions and optional local storage for preferences such as theme and language. See our <a href={localePath(locale,"/cookies")}>Cookie Policy</a>.</p></div><div class="cookie-actions"><button id="cookie-accept" class="btn primary" type="button">Accept</button><button id="cookie-close" class="btn" type="button">Close</button></div></div><script is:inline>
 (() => {
   const root=document.documentElement;
