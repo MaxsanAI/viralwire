@@ -1,7 +1,6 @@
-import type { D1Database } from "@cloudflare/workers-types";
 const FROM_DEFAULT="VIRALWIRE <newsletter@pulserapp.com>";
 const esc=(v:string)=>v.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
-export async function ensureNewsletterTables(db:D1Database){
+export async function ensureNewsletterTables(db:any){
  await db.prepare(`CREATE TABLE IF NOT EXISTS newsletter_subscribers(id INTEGER PRIMARY KEY AUTOINCREMENT,email TEXT NOT NULL UNIQUE,status TEXT NOT NULL DEFAULT 'pending',consent_at TEXT NOT NULL,created_at TEXT NOT NULL)`).run();
  for(const [n,t] of [["confirmation_token","TEXT"],["confirmed_at","TEXT"],["unsubscribed_at","TEXT"]]){try{await db.prepare(`ALTER TABLE newsletter_subscribers ADD COLUMN ${n} ${t}`).run()}catch{}}
  await db.prepare(`CREATE TABLE IF NOT EXISTS newsletter_campaigns(id INTEGER PRIMARY KEY AUTOINCREMENT,subject TEXT NOT NULL,body TEXT NOT NULL,sent_at TEXT NOT NULL,recipient_count INTEGER NOT NULL DEFAULT 0)`).run();
