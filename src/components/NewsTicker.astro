@@ -1,0 +1,25 @@
+---
+const { stories = [] } = Astro.props;
+const items = stories.slice(0, 10);
+---
+{items.length > 0 && (
+  <div class="ticker" aria-label="Latest stories">
+    <div class="ticker-label"><span class="live-dot"></span> BREAKING</div>
+    <div class="ticker-viewport">
+      <div class="ticker-track">
+        {items.map((story) => (
+          <a href={`/story/${story.slug}`} class="ticker-item">
+            <span class="ticker-category">{story.category}</span>
+            <span>{story.title}</span>
+          </a>
+        ))}
+        {items.map((story) => (
+          <a href={`/story/${story.slug}`} class="ticker-item" aria-hidden="true" tabindex="-1">
+            <span class="ticker-category">{story.category}</span>
+            <span>{story.title}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
