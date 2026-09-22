@@ -3,5 +3,5 @@ import cloudflare from "@astrojs/cloudflare";
 export default defineConfig({
   output:"server",
   adapter:cloudflare(),
-  site:"https://viralwire.pages.dev"
+  site:"https://viralwire.pulserapp.com"
 });
