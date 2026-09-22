@@ -5,12 +5,12 @@ import {getPublishedStories} from "../lib/db";
 import NewsTicker from "../components/NewsTicker.astro";
 
 const {title=SITE_NAME,description=SITE_TAGLINE,image,canonical,noindex=false}=Astro.props;
+const site=Astro.locals.runtime?.env?.SITE_URL||"https://viralwire.pages.dev";
 const locale=getLocale(Astro.locals);
 const path=Astro.url.pathname;
 const localizedCanonical=localePath(locale,path);
 const canonicalUrl=canonical||absoluteUrl(localizedCanonical,site);
 const langAlternates=locales.map(code=>({code,url:absoluteUrl(localePath(code,path),site)}));
-const site=Astro.locals.runtime?.env?.SITE_URL||"https://viralwire.pages.dev";
 const pageTitle=title===SITE_NAME?SITE_NAME:title+" — "+SITE_NAME;
 
 const tickerStories=await getPublishedStories(Astro.locals,12);
