@@ -1,0 +1,94 @@
+---
+---
+<div class="image-upload" data-image-upload>
+  <input class="image-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+  <button type="button" class="btn image-upload-btn" data-upload-button>Insert image</button>
+  <span class="image-upload-status" data-upload-status></span>
+</div>
+
+<script>
+  const root = document.currentScript?.previousElementSibling;
+  if (root instanceof HTMLElement) {
+    const input = root.querySelector(".image-file");
+    const button = root.querySelector("[data-upload-button]");
+    const status = root.querySelector("[data-upload-status]");
+    const editor = document.querySelector("#editor");
+
+    const setStatus = (message = "", error = false) => {
+      if (status instanceof HTMLElement) {
+        status.textContent = message;
+        status.dataset.error = error ? "1" : "0";
+      }
+    };
+
+    if (input instanceof HTMLInputElement && button instanceof HTMLButtonElement && editor instanceof HTMLElement) {
+      button.addEventListener("click", () => input.click());
+
+      input.addEventListener("change", async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+
+        if (file.size > 8 * 1024 * 1024) {
+          setStatus("Image must be 8 MB or smaller.", true);
+          input.value = "";
+          return;
+        }
+
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(editor);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+
+        button.disabled = true;
+        setStatus("Uploading…");
+
+        try {
+          const form = new FormData();
+          form.append("image", file);
+
+          const response = await fetch("/api/admin/upload-image", {
+            method: "POST",
+            body: form
+          });
+
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok || !result.url) {
+            throw new Error(result.error || "Upload failed.");
+          }
+
+          const image = document.createElement("img");
+          image.src = result.url;
+          image.alt = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
+          image.loading = "lazy";
+          image.style.maxWidth = "100%";
+          image.style.height = "auto";
+
+          const paragraph = document.createElement("p");
+          paragraph.appendChild(image);
+          range.insertNode(paragraph);
+
+          range.setStartAfter(paragraph);
+          range.collapse(true);
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+
+          setStatus("Image inserted.");
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : "Upload failed.", true);
+        } finally {
+          button.disabled = false;
+          input.value = "";
+        }
+      });
+    }
+  }
+</script>
+
+<style>
+  .image-upload{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .image-upload-btn{font-size:13px;padding:8px 12px}
+  .image-upload-status{font-size:12px;color:var(--muted)}
+  .image-upload-status[data-error="1"]{color:#ff7b8b}
+</style>
