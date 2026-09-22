@@ -5,11 +5,63 @@ import Monetag from "../components/Monetag.astro";
 import {getPublishedStories} from "../lib/db";
 import {formatDate} from "../lib/site";
 import {getLocale,localePath,t} from "../lib/i18n";
+
 const locale=getLocale(Astro.locals);
-const stories=await getPublishedStories(Astro.locals,12); const hero=stories[0]; const side=stories.slice(1,4); const rest=stories.slice(4);
+const stories=await getPublishedStories(Astro.locals,12);
+const hero=stories[0];
+const side=stories.slice(1,4);
+const rest=stories.slice(4);
 ---
+
 <Layout title="VIRALWIRE" description="The stories taking over the internet — viral moments, X debates, tech, entertainment, creators and internet culture." image={hero?.cover_image}>
-{hero&&{hero&&<section class="wrap section"><div class="hero-grid"><a class="hero" href={localePath(locale,"/story/"+hero.slug)}><img src={hero.cover_image} alt={hero.title}><div class="hero-content"><div class="meta"><span class="pill">{hero.category}</span><span>{formatDate(hero.published_at)}</span></div><h1>{hero.title}</h1><p>{hero.excerpt}</p></div></a><div class="side-list">{side.map(story=><a class="story-card" href={localePath(locale,"/story/"+story.slug)}><img src={story.cover_image} alt={story.title} loading="lazy"><div class="story-card-body"><div class="meta"><span class="pill">{story.category}</span></div><h3>{story.title}</h3><p>{story.excerpt}</p></div></a>)}</div></div></section>}
-<Monetag />
-{rest.length>0&&{rest.length>0&&<section class="wrap section"><div class="section-head"><div><div class="eyebrow">THE FEED</div><h2>{t(Astro.locals,"talking")}</h2></div><a class="btn" href={localePath(locale,"/trending")}>{t(Astro.locals,"viewTrending")}</a></div><div class="grid">{rest.map(story=><StoryCard story={story}/>)}</div></section>}
+  {hero && (
+    <section class="wrap section">
+      <div class="hero-grid">
+        <a class="hero" href={localePath(locale,"/story/"+hero.slug)}>
+          <img src={hero.cover_image} alt={hero.title}>
+          <div class="hero-content">
+            <div class="meta">
+              <span class="pill">{hero.category}</span>
+              <span>{formatDate(hero.published_at)}</span>
+            </div>
+            <h1>{hero.title}</h1>
+            <p>{hero.excerpt}</p>
+          </div>
+        </a>
+
+        <div class="side-list">
+          {side.map(story => (
+            <a class="story-card" href={localePath(locale,"/story/"+story.slug)}>
+              <img src={story.cover_image} alt={story.title} loading="lazy">
+              <div class="story-card-body">
+                <div class="meta">
+                  <span class="pill">{story.category}</span>
+                </div>
+                <h3>{story.title}</h3>
+                <p>{story.excerpt}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <Monetag />
+
+  {rest.length > 0 && (
+    <section class="wrap section">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">THE FEED</div>
+          <h2>{t(Astro.locals,"talking")}</h2>
+        </div>
+        <a class="btn" href={localePath(locale,"/trending")}>{t(Astro.locals,"viewTrending")}</a>
+      </div>
+
+      <div class="grid">
+        {rest.map(story => <StoryCard story={story}/>)}
+      </div>
+    </section>
+  )}
 </Layout>
