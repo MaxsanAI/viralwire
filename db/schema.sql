@@ -1,0 +1,19 @@
+CREATE TABLE IF NOT EXISTS stories (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+slug TEXT NOT NULL UNIQUE,
+title TEXT NOT NULL,
+excerpt TEXT NOT NULL DEFAULT '',
+content TEXT NOT NULL DEFAULT '',
+category TEXT NOT NULL DEFAULT 'Viral',
+tags TEXT NOT NULL DEFAULT '',
+cover_image TEXT NOT NULL DEFAULT '',
+x_post TEXT NOT NULL DEFAULT '',
+status TEXT NOT NULL DEFAULT 'draft',
+published_at TEXT NOT NULL,
+views INTEGER NOT NULL DEFAULT 0,
+created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_stories_status_date ON stories(status,published_at);
+CREATE INDEX IF NOT EXISTS idx_stories_category ON stories(category);
+CREATE INDEX IF NOT EXISTS idx_stories_views ON stories(views DESC);
