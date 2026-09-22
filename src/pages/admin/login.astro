@@ -1,0 +1,6 @@
+---
+import Layout from "../../layouts/Layout.astro";
+if(Astro.cookies.get("vw_admin")?.value==="1")return Astro.redirect("/admin");
+const error=Astro.url.searchParams.get("error");
+---
+<Layout title="Admin Login — VIRALWIRE" noindex><div class="login"><div class="login-card"><a class="logo" href="/">VIRAL<span>WIRE</span></a><h1 style="font-family:'Space Grotesk';margin:28px 0 7px">Vault Control</h1><p class="muted">Private editorial dashboard.</p>{error&&<p style="color:#ff709f">Incorrect password.</p>}<form action="/api/admin/login" method="post" style="display:grid;gap:14px;margin-top:24px"><div class="field"><label>Admin password</label><input type="password" name="password" required autocomplete="current-password"></div><button class="btn primary" type="submit">Enter Control Room</button></form></div></div></Layout>
