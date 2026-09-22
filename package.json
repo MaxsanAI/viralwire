@@ -1,8 +1,16 @@
 {
-  "name":"viralwire",
-  "version":"1.0.0",
-  "private":true,
-  "type":"module",
-  "scripts":{"dev":"astro dev","build":"astro build","preview":"astro preview"},
-  "dependencies":{"@astrojs/cloudflare":"^12.6.0","astro":"^5.13.5"}
+  "name": "viralwire",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^12.6.0",
+    "astro": "^5.13.5",
+    "@cloudflare/workers-types": "^4.20250917.0"
+  }
 }
