@@ -1,0 +1,4 @@
+import type {APIRoute} from "astro";
+import {getPublishedStories} from "../lib/db";
+const esc=(s:string)=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+export const GET:APIRoute=async({locals})=>{const base=locals.runtime?.env?.SITE_URL||"https://viralwire.pages.dev";const stories=await getPublishedStories(locals,100);const paths=["/","/trending",...stories.map(s=>"/story/"+s.slug)];const xml=paths.map(p=>"<url><loc>"+esc(base.replace(/\/$/,"")+p)+"</loc></url>").join("");return new Response('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+xml+"</urlset>",{headers:{"Content-Type":"application/xml"}})};
