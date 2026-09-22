@@ -1,0 +1,5 @@
+---
+import {formatDate,readingTime} from "../lib/site";
+const {story}=Astro.props;
+---
+<a class="tile" href={"/story/"+story.slug}><img src={story.cover_image} alt={story.title} loading="lazy"><div class="tile-body"><div class="meta"><span class="pill">{story.category}</span><span>{formatDate(story.published_at)}</span><span>{readingTime(story.content)} min</span></div><h3>{story.title}</h3><p>{story.excerpt}</p></div></a>
