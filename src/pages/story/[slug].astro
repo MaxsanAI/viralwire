@@ -1,0 +1,15 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Monetag from "../../components/Monetag.astro";
+import StoryCard from "../../components/StoryCard.astro";
+import {getStoryBySlug,getRelatedStories,incrementViews} from "../../lib/db";
+import {formatDate,readingTime,absoluteUrl} from "../../lib/site";
+const slug=Astro.params.slug||"";
+const story=await getStoryBySlug(Astro.locals,slug);
+if(!story)return Astro.redirect("/404");
+await incrementViews(Astro.locals,story.id);
+const related=await getRelatedStories(Astro.locals,story);
+const site=Astro.locals.runtime?.env?.SITE_URL||"https://viralwire.pages.dev";
+const shareUrl=absoluteUrl("/story/"+story.slug,site);
+---
+<Layout title={story.title} description={story.excerpt} image={story.cover_image} canonical={shareUrl}><article class="wrap article"><header class="article-head"><div class="meta"><span class="pill">{story.category}</span><span>{formatDate(story.published_at)}</span><span>{readingTime(story.content)} min read</span></div><h1>{story.title}</h1><p class="dek">{story.excerpt}</p><div class="sharebar"><a class="btn primary" href={"https://twitter.com/intent/tweet?text="+encodeURIComponent(story.x_post||story.title)+"&url="+encodeURIComponent(shareUrl)} target="_blank" rel="noopener">Share on X ↗</a><button class="btn" id="copy">Copy link</button></div></header><img class="cover" src={story.cover_image} alt={story.title}><Monetag /><div class="prose" set:html={story.content}></div><Monetag />{related.length>0&&<section class="section"><div class="section-head"><div><div class="eyebrow">KEEP READING</div><h2>More from VIRALWIRE</h2></div></div><div class="grid">{related.map(s=><StoryCard story={s}/>)}</div></section>}</article><script>document.getElementById("copy")?.addEventListener("click",()=>navigator.clipboard.writeText(location.href))</script></Layout>
