@@ -1,0 +1,23 @@
+import type { D1Database } from "@cloudflare/workers-types";
+const FROM_DEFAULT="VIRALWIRE <newsletter@pulserapp.com>";
+const esc=(v:string)=>v.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+export async function ensureNewsletterTables(db:D1Database){
+ await db.prepare(`CREATE TABLE IF NOT EXISTS newsletter_subscribers(id INTEGER PRIMARY KEY AUTOINCREMENT,email TEXT NOT NULL UNIQUE,status TEXT NOT NULL DEFAULT 'pending',consent_at TEXT NOT NULL,created_at TEXT NOT NULL)`).run();
+ for(const [n,t] of [["confirmation_token","TEXT"],["confirmed_at","TEXT"],["unsubscribed_at","TEXT"]]){try{await db.prepare(`ALTER TABLE newsletter_subscribers ADD COLUMN ${n} ${t}`).run()}catch{}}
+ await db.prepare(`CREATE TABLE IF NOT EXISTS newsletter_campaigns(id INTEGER PRIMARY KEY AUTOINCREMENT,subject TEXT NOT NULL,body TEXT NOT NULL,sent_at TEXT NOT NULL,recipient_count INTEGER NOT NULL DEFAULT 0)`).run();
+}
+export async function sendEmail(env:any,to:string,subject:string,html:string){
+ const key=String(env?.RESEND_API_KEY||"");if(!key)throw new Error("RESEND_API_KEY is not configured.");
+ const from=String(env?.NEWSLETTER_FROM||FROM_DEFAULT);
+ const r=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${key}`,"Content-Type":"application/json"},body:JSON.stringify({from,to,subject,html})});
+ if(!r.ok)throw new Error((await r.text())||"Resend rejected the email.");return r.json();
+}
+export function confirmationEmail(site:string,token:string){
+ const u=site.replace(/\/$/,"")+"/newsletter/confirm?token="+encodeURIComponent(token);
+ return `<!doctype html><html><body style="margin:0;background:#08090c;color:#f5f7fa;font-family:Arial;padding:40px 20px"><div style="max-width:620px;margin:auto;background:#101218;border:1px solid #242832;border-radius:18px;padding:32px"><div style="font-size:24px;font-weight:900">VIRAL<span style="color:#ff3d81">WIRE</span></div><p style="color:#ff3d81;text-transform:uppercase;letter-spacing:1.5px;font-size:11px;font-weight:700;margin-top:28px">THE VIRALWIRE DROP</p><h1 style="font-size:32px">Confirm your email.</h1><p style="font-size:16px;line-height:1.7;color:#c5cad4">Click below to confirm your subscription and receive the stories worth knowing.</p><p><a href="${u}" style="display:inline-block;background:linear-gradient(135deg,#ff3d81,#7c5cff);color:#fff;text-decoration:none;padding:13px 18px;border-radius:10px;font-weight:800">CONFIRM SUBSCRIPTION</a></p><p style="font-size:12px;color:#8d95a5">If you didn't request this, ignore this email.</p></div></body></html>`;
+}
+export function newsletterHtml(site:string,subject:string,intro:string,stories:any[],token:string){
+ const base=site.replace(/\/$/,""),unsub=base+"/newsletter/unsubscribe?token="+encodeURIComponent(token);
+ const cards=stories.map(s=>`<article style="margin:0 0 28px;padding:0 0 24px;border-bottom:1px solid #242832"><a href="${base}/story/${encodeURIComponent(s.slug)}" style="color:#fff;text-decoration:none"><img src="${s.cover_image}" alt="" style="width:100%;max-height:300px;object-fit:cover;border-radius:12px"><h2 style="font-size:23px;line-height:1.15;margin:13px 0 8px">${esc(s.title)}</h2></a><div style="font-size:11px;color:#ff3d81;text-transform:uppercase;font-weight:800;letter-spacing:1px">${esc(s.category)}</div><p style="color:#aeb5c2;line-height:1.65;font-size:14px">${esc(s.excerpt)}</p><a href="${base}/story/${encodeURIComponent(s.slug)}" style="color:#3b82f6;font-weight:800;font-size:12px;text-decoration:none">READ STORY →</a></article>`).join("");
+ return `<!doctype html><html><body style="margin:0;background:#08090c;color:#f5f7fa;font-family:Arial;padding:24px 12px"><div style="max-width:680px;margin:auto;background:#101218;border:1px solid #242832;border-radius:18px;overflow:hidden"><div style="padding:26px 28px;background:linear-gradient(135deg,#17111c,#101218);border-bottom:1px solid #242832"><div style="font-size:24px;font-weight:900">VIRAL<span style="color:#ff3d81">WIRE</span></div><div style="margin-top:22px;font-size:11px;color:#ff3d81;text-transform:uppercase;letter-spacing:1.5px;font-weight:800">THE VIRALWIRE DROP</div><h1 style="font-size:34px;line-height:1.05;margin:8px 0 0">${esc(subject)}</h1></div><div style="padding:28px">${intro?`<p style="font-size:16px;line-height:1.7;color:#c5cad4;margin-top:0">${esc(intro)}</p>`:""}${cards}</div><div style="padding:20px 28px;border-top:1px solid #242832;color:#777f8d;font-size:11px">You're receiving this because you subscribed to VIRALWIRE. <a href="${unsub}" style="color:#8d95a5">Unsubscribe</a>.</div></div></body></html>`;
+}
