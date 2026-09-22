@@ -1,0 +1,10 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import StoryCard from "../../components/StoryCard.astro";
+import {getPublishedStories} from "../../lib/db";
+const slug=Astro.params.category||"";
+const stories=await getPublishedStories(Astro.locals,50);
+const filtered=stories.filter(s=>s.category.toLowerCase().replace(/[^a-z0-9]+/g,"-")===slug);
+const category=filtered[0]?.category||slug.replace(/-/g," ");
+---
+<Layout title={category} description={"Latest "+category+" stories on VIRALWIRE."}><section class="wrap section"><div class="eyebrow">CATEGORY</div><h1 style="font-family:'Space Grotesk';font-size:clamp(44px,7vw,72px);letter-spacing:-3px;text-transform:capitalize;margin:8px 0 30px">{category}</h1><div class="grid">{filtered.map(s=><StoryCard story={s}/>)}</div>{!filtered.length&&<div class="panel"><strong>No stories in this category yet.</strong></div>}</section></Layout>
