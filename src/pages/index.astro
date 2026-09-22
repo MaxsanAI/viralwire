@@ -20,23 +20,17 @@ const rest=stories.slice(4);
         <a class="hero" href={localePath(locale,"/story/"+hero.slug)}>
           <img src={hero.cover_image} alt={hero.title}>
           <div class="hero-content">
-            <div class="meta">
-              <span class="pill">{hero.category}</span>
-              <span>{formatDate(hero.published_at)}</span>
-            </div>
+            <div class="meta"><span class="pill">{hero.category}</span><span>{formatDate(hero.published_at)}</span></div>
             <h1>{hero.title}</h1>
             <p>{hero.excerpt}</p>
           </div>
         </a>
-
         <div class="side-list">
           {side.map(story => (
             <a class="story-card" href={localePath(locale,"/story/"+story.slug)}>
               <img src={story.cover_image} alt={story.title} loading="lazy">
               <div class="story-card-body">
-                <div class="meta">
-                  <span class="pill">{story.category}</span>
-                </div>
+                <div class="meta"><span class="pill">{story.category}</span></div>
                 <h3>{story.title}</h3>
                 <p>{story.excerpt}</p>
               </div>
@@ -52,16 +46,60 @@ const rest=stories.slice(4);
   {rest.length > 0 && (
     <section class="wrap section">
       <div class="section-head">
-        <div>
-          <div class="eyebrow">THE FEED</div>
-          <h2>{t(Astro.locals,"talking")}</h2>
-        </div>
+        <div><div class="eyebrow">THE FEED</div><h2>{t(Astro.locals,"talking")}</h2></div>
         <a class="btn" href={localePath(locale,"/trending")}>{t(Astro.locals,"viewTrending")}</a>
       </div>
+      <div class="grid">{rest.map(story => <StoryCard story={story}/>)}</div>
+    </section>
+  )}
 
-      <div class="grid">
-        {rest.map(story => <StoryCard story={story}/>)}
+  {stories.length > 2 && (
+    <section class="wrap section retention-newsletter">
+      <div class="newsletter-card">
+        <div class="newsletter-copy">
+          <div class="eyebrow">THE VIRALWIRE DROP</div>
+          <h2>Don’t miss what breaks next.</h2>
+          <p>The biggest stories, internet debates and viral moments — delivered straight to your inbox.</p>
+          <span class="newsletter-note">No spam. Just the stories worth knowing.</span>
+        </div>
+        <form class="newsletter-form" data-newsletter-form>
+          <label for="newsletter-email">Email address</label>
+          <div class="newsletter-input-row">
+            <input id="newsletter-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+            <button class="btn primary" type="submit">GET THE DROP</button>
+          </div>
+          <input class="newsletter-honeypot" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="newsletter-status" data-newsletter-status aria-live="polite"></div>
+        </form>
       </div>
     </section>
   )}
 </Layout>
+
+<script>
+const forms=document.querySelectorAll("[data-newsletter-form]");
+forms.forEach((form)=>{
+  form.addEventListener("submit",async(e)=>{
+    e.preventDefault();
+    const f=form;
+    const button=f.querySelector("button");
+    const status=f.querySelector("[data-newsletter-status]");
+    const data=new FormData(f);
+    button.disabled=true;
+    button.textContent="JOINING…";
+    status.textContent="";
+    try{
+      const r=await fetch("/api/newsletter/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:data.get("email"),website:data.get("website")})});
+      const j=await r.json();
+      if(!r.ok) throw new Error(j.error||"Something went wrong.");
+      status.textContent=j.message||"You're in. Watch your inbox.";
+      f.reset();
+    }catch(err){
+      status.textContent=err instanceof Error?err.message:"Something went wrong. Please try again.";
+    }finally{
+      button.disabled=false;
+      button.textContent="GET THE DROP";
+    }
+  });
+});
+</script>
