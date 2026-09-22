@@ -189,10 +189,10 @@ const {target="editor"}=Astro.props;
     z-index:99999;
     min-width:190px;
     padding:6px;
-    border:1px solid rgba(255,255,255,.12);
+    border:1px solid var(--line);
     border-radius:12px;
-    background:rgba(18,20,28,.98);
-    box-shadow:0 18px 50px rgba(0,0,0,.4);
+    background:color-mix(in srgb,var(--panel) 96%,transparent);
+    box-shadow:0 18px 50px rgba(0,0,0,.22);
     backdrop-filter:blur(14px);
   }
   .editor-context-menu button{
@@ -211,7 +211,7 @@ const {target="editor"}=Astro.props;
     cursor:pointer;
   }
   .editor-context-menu button:hover{
-    background:rgba(255,255,255,.08);
+    background:var(--panel2);
   }
   .editor-context-menu button span{
     width:18px;
