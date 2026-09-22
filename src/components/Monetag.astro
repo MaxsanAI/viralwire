@@ -1,0 +1,5 @@
+---
+const scriptUrl=Astro.locals.runtime?.env?.PUBLIC_MONETAG_SCRIPT_URL;
+const zoneId=Astro.locals.runtime?.env?.PUBLIC_MONETAG_ZONE_ID;
+---
+{scriptUrl&&zoneId&&<div class="ad-slot" aria-label="Advertisement"><script async src={scriptUrl}></script><div data-monetag-zone={zoneId}></div></div>}
