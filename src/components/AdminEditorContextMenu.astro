@@ -6,6 +6,7 @@ const {target="editor"}=Astro.props;
   <div class="editor-context-menu" data-context-menu hidden>
     <button type="button" data-action="image"><span>▧</span> Insert image</button>
     <button type="button" data-action="x"><span>𝕏</span> Insert X post</button>
+    <button type="button" data-action="youtube"><span>▶</span> Insert YouTube</button>
   </div>
 </div>
 
@@ -20,6 +21,7 @@ const {target="editor"}=Astro.props;
     const fileInput = root.querySelector(".editor-context-file");
     const imageAction = root.querySelector('[data-action="image"]');
     const xAction = root.querySelector('[data-action="x"]');
+    const youtubeAction = root.querySelector('[data-action="youtube"]');
 
     let savedRange = null;
     let menuOpen = false;
@@ -79,8 +81,8 @@ const {target="editor"}=Astro.props;
       event.preventDefault();
       saveSelection();
 
-      const width = 190;
-      const height = 92;
+      const width = 210;
+      const height = 132;
       const left = Math.min(event.clientX, window.innerWidth - width - 8);
       const top = Math.min(event.clientY, window.innerHeight - height - 8);
 
@@ -126,6 +128,60 @@ const {target="editor"}=Astro.props;
         url +
         "</a></blockquote>";
 
+      insertAtSavedRange(wrap);
+    });
+
+    youtubeAction?.addEventListener("click", () => {
+      closeMenu();
+
+      const value = window.prompt(
+        "Paste a YouTube video URL or YouTube embed code:",
+        ""
+      );
+
+      if (!value) return;
+
+      let videoId = "";
+      const embedMatch = value.match(
+        /youtube(?:-nocookie)?\.com\/embed\/([A-Za-z0-9_-]{11})/i
+      );
+      const watchMatch = value.match(
+        /(?:youtube\.com\/watch\?[^\s"'<>]*v=|youtu\.be\/)([A-Za-z0-9_-]{11})/i
+      );
+
+      if (embedMatch) videoId = embedMatch[1];
+      else if (watchMatch) videoId = watchMatch[1];
+
+      if (!videoId) {
+        alert("Please paste a valid YouTube URL or YouTube embed code.");
+        return;
+      }
+
+      const wrap = document.createElement("div");
+      wrap.className = "youtube-embed";
+      wrap.style.margin = "20px 0";
+      wrap.style.position = "relative";
+      wrap.style.width = "100%";
+      wrap.style.aspectRatio = "16 / 9";
+      wrap.style.overflow = "hidden";
+      wrap.style.borderRadius = "12px";
+
+      const iframe = document.createElement("iframe");
+      iframe.src = "https://www.youtube-nocookie.com/embed/" + videoId;
+      iframe.title = "YouTube video";
+      iframe.loading = "lazy";
+      iframe.allowFullscreen = true;
+      iframe.setAttribute(
+        "allow",
+        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      );
+      iframe.style.position = "absolute";
+      iframe.style.inset = "0";
+      iframe.style.width = "100%";
+      iframe.style.height = "100%";
+      iframe.style.border = "0";
+
+      wrap.appendChild(iframe);
       insertAtSavedRange(wrap);
     });
 
@@ -187,7 +243,7 @@ const {target="editor"}=Astro.props;
   .editor-context-menu{
     position:fixed;
     z-index:99999;
-    min-width:190px;
+    min-width:210px;
     padding:6px;
     border:1px solid var(--line);
     border-radius:12px;
