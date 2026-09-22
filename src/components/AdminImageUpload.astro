@@ -11,11 +11,14 @@ const {target="editor",label="Insert image"}=Astro.props;
   document.querySelectorAll("[data-image-upload]").forEach((root) => {
     if (!(root instanceof HTMLElement) || root.dataset.ready === "1") return;
     root.dataset.ready = "1";
+
     const input = root.querySelector(".image-file");
     const button = root.querySelector("[data-upload-button]");
     const status = root.querySelector("[data-upload-status]");
     const targetId = root.dataset.target || "editor";
     const target = document.getElementById(targetId);
+
+    let savedRange = null;
 
     const setStatus = (message="", error=false) => {
       if (status instanceof HTMLElement) {
@@ -24,13 +27,30 @@ const {target="editor",label="Insert image"}=Astro.props;
       }
     };
 
+    const selectionBelongsToTarget = (selection) => {
+      if (!selection || selection.rangeCount === 0 || !(target instanceof HTMLElement)) return false;
+      const range = selection.getRangeAt(0);
+      return target.contains(range.commonAncestorContainer);
+    };
+
+    const saveSelection = () => {
+      const selection = window.getSelection();
+      if (selectionBelongsToTarget(selection)) {
+        savedRange = selection.getRangeAt(0).cloneRange();
+      }
+    };
+
     if (!(input instanceof HTMLInputElement) || !(button instanceof HTMLButtonElement) || !(target instanceof HTMLElement)) return;
+
+    // Save the caret before the file picker takes focus.
+    button.addEventListener("mousedown", saveSelection);
 
     button.addEventListener("click", () => input.click());
 
     input.addEventListener("change", async () => {
       const file=input.files?.[0];
       if (!file) return;
+
       if (file.size > 8*1024*1024) {
         setStatus("Image must be 8 MB or smaller.",true);
         input.value="";
@@ -43,8 +63,10 @@ const {target="editor",label="Insert image"}=Astro.props;
       try {
         const form=new FormData();
         form.append("image",file);
+
         const response=await fetch("/api/admin/upload-image",{method:"POST",body:form});
         const result=await response.json().catch(()=>({}));
+
         if (!response.ok || !result.url) throw new Error(result.error || "Upload failed.");
 
         if (target instanceof HTMLInputElement) {
@@ -53,14 +75,6 @@ const {target="editor",label="Insert image"}=Astro.props;
           target.dispatchEvent(new Event("change",{bubbles:true}));
           setStatus("Cover uploaded.");
         } else {
-          target.focus();
-          const range=document.createRange();
-          const selection=window.getSelection();
-          range.selectNodeContents(target);
-          range.collapse(false);
-          selection?.removeAllRanges();
-          selection?.addRange(range);
-
           const image=document.createElement("img");
           image.src=result.url;
           image.alt=file.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," ").trim();
@@ -68,13 +82,36 @@ const {target="editor",label="Insert image"}=Astro.props;
           image.style.maxWidth="100%";
           image.style.height="auto";
 
-          const paragraph=document.createElement("p");
-          paragraph.appendChild(image);
-          range.insertNode(paragraph);
-          range.setStartAfter(paragraph);
-          range.collapse(true);
+          const figure=document.createElement("figure");
+          figure.style.margin="18px 0";
+          figure.appendChild(image);
+
+          const range=savedRange && target.contains(savedRange.commonAncestorContainer)
+            ? savedRange
+            : (() => {
+                const fallback=document.createRange();
+                fallback.selectNodeContents(target);
+                fallback.collapse(false);
+                return fallback;
+              })();
+
+          range.deleteContents();
+          range.insertNode(figure);
+
+          // Put the caret immediately after the inserted image so the next
+          // text/image is inserted where the editor user expects it.
+          const after=document.createRange();
+          after.setStartAfter(figure);
+          after.collapse(true);
+
+          const selection=window.getSelection();
           selection?.removeAllRanges();
-          selection?.addRange(range);
+          selection?.addRange(after);
+
+          target.focus();
+          target.dispatchEvent(new InputEvent("input",{bubbles:true,inputType:"insertImage",data:null}));
+
+          savedRange=null;
           setStatus("Image inserted.");
         }
       } catch(error) {
