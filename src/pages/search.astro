@@ -1,0 +1,8 @@
+---
+import Layout from "../layouts/Layout.astro";
+import StoryCard from "../components/StoryCard.astro";
+import {searchStories} from "../lib/db";
+const q=Astro.url.searchParams.get("q")||"";
+const results=q?await searchStories(Astro.locals,q):[];
+---
+<Layout title={q?"Search: "+q:"Search"} description="Search VIRALWIRE stories."><section class="wrap section"><div class="eyebrow">SEARCH</div><h1 style="font-family:'Space Grotesk';font-size:52px;letter-spacing:-2px;margin:10px 0 26px">Search stories</h1><form action="/search" method="get" style="display:flex;gap:10px;max-width:700px;margin-bottom:32px"><input class="search" style="height:48px;flex:1;width:auto" name="q" value={q} placeholder="Try AI, X, movies, creators..."><button class="btn primary" type="submit">Search</button></form>{q&&<p class="muted">{results.length} result{results.length===1?"":"s"} for “{q}”</p>}<div class="grid" style="margin-top:20px">{results.map(s=><StoryCard story={s}/>)}</div>{q&&!results.length&&<div class="panel"><strong>No stories found.</strong><p class="muted">Try a different keyword.</p></div>}</section></Layout>
