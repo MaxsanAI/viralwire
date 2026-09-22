@@ -84,6 +84,25 @@ html[data-theme="light"]{--bg:#f4f6fa;--panel:#fff;--panel2:#f0f2f6;--line:#dfe3
 })();
 </script>
 <script is:inline>
+(() => {
+  const smartLink="https://omg10.com/4/9027972";
+  let opened=false;
+  const openSmartLink=(e)=>{
+    if(opened)return;
+    const a=e.target?.closest?.("a[href]");
+    if(!a)return;
+    const href=a.getAttribute("href")||"";
+    if(!href.startsWith("/") && !href.startsWith(window.location.origin))return;
+    if(a.target==="_blank")return;
+    const isArticleLink=href.includes("/story/") || href.includes("/trending") || href.includes("/category/");
+    if(!isArticleLink)return;
+    opened=true;
+    window.open(smartLink,"_blank","noopener,noreferrer");
+  };
+  document.addEventListener("click",openSmartLink,true);
+})();
+</script>
+<script is:inline>
 window.googleTranslateElementInit=()=>{new google.translate.TranslateElement({pageLanguage:"en",includedLanguages:"af,sq,am,ar,hy,az,eu,be,bn,bs,bg,ca,ceb,ny,zh-CN,zh-TW,co,hr,cs,da,nl,en,eo,et,fi,fr,fy,gl,ka,de,el,gu,ht,ha,haw,iw,he,hi,hmn,hu,is,ig,id,ga,it,ja,jw,kn,kk,km,rw,ko,ku,ky,lo,la,lv,lt,lb,mk,mg,ms,ml,mt,mi,mr,mn,my,ne,no,or,ps,fa,pl,pt,pa,ro,ru,sm,gd,sr,st,si,sk,sl,so,es,su,sw,sv,tg,ta,tt,te,th,tr,tk,uk,ur,ug,uz,vi,cy,xh,yi,yo,zu",autoDisplay:false},"google_translate_element")};
 </script>
 <script is:inline src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
