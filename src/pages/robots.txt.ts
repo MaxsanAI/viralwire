@@ -1,2 +1,2 @@
 import type {APIRoute} from "astro";
-export const GET:APIRoute=({locals})=>{const base=locals.runtime?.env?.SITE_URL||"https://viralwire.pages.dev";return new Response("User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api\nSitemap: "+base+"/sitemap.xml\n",{headers:{"Content-Type":"text/plain"}})};
+export const GET:APIRoute=({locals})=>{const base=locals.runtime?.env?.SITE_URL||"https://viralwire.pulserapp.com";return new Response("User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api\nSitemap: "+base+"/sitemap.xml\n",{headers:{"Content-Type":"text/plain"}})};
