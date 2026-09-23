@@ -28,7 +28,7 @@ const tickerStories=await getPublishedStories(Astro.locals,12);
 {langAlternates.map(a=><link rel="alternate" hreflang={a.code} href={a.url}/>)}<link rel="alternate" hreflang="x-default" href={absoluteUrl(basePath,site)}>
 <meta property="og:type" content="website"><meta property="og:site_name" content={SITE_NAME}><meta name="application-name" content={SITE_NAME}><meta property="og:title" content={pageTitle}><meta property="og:description" content={description}><meta property="og:url" content={canonicalUrl}>
 {imageUrl&&<><meta property="og:image" content={imageUrl}><meta property="og:image:alt" content={pageTitle}></>}<meta name="twitter:card" content={imageUrl?"summary_large_image":"summary"}><meta name="twitter:title" content={pageTitle}><meta name="twitter:description" content={description}>{imageUrl&&<meta name="twitter:image" content={imageUrl}>}
-<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="alternate" type="application/rss+xml" title="VIRALWIRE RSS" href="/rss.xml"><meta name="Trafficstars" content="91047"><script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="alternate" type="application/rss+xml" title="VIRALWIRE RSS" href="/rss.xml"><script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1">
   (function () {
       var script = document.createElement("script");
       script.async = 1;
