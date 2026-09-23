@@ -3,9 +3,9 @@ import {ensureNewsletterTables,newsletterHtml,sendEmail} from "../../../../lib/n
 
 const json=(data:any,status=200)=>new Response(JSON.stringify(data),{status,headers:{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}});
 
-export const POST:APIRoute=async({locals,request})=>{
+export const POST:APIRoute=async({locals,request,cookies})=>{
  try{
-  if(locals.cookies.get("vw_admin")?.value!=="1")return json({error:"Unauthorized"},401);
+  if(cookies.get("vw_admin")?.value!=="1")return json({error:"Unauthorized"},401);
   const env=locals.runtime?.env;
   const db=env?.DB;
   if(!db)return json({error:"D1 is not connected."},503);
