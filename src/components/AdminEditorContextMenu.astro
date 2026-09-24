@@ -4,11 +4,24 @@ const {target="editor"}=Astro.props;
 <div class="editor-context" data-editor-context data-target={target}>
   <input class="editor-context-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
   <div class="editor-context-menu" data-context-menu hidden>
-    <button type="button" data-action="image"><span>▧</span> Insert image</button>
-    <button type="button" data-action="x"><span>𝕏</span> Insert X post</button>
-    <button type="button" data-action="youtube"><span>▶</span> Insert YouTube</button>
-    <button type="button" data-action="widget"><span>&lt;/&gt;</span> Insert widget code</button>
-    <button type="button" data-action="paste"><span>T</span> Paste text</button>
+    <div class="context-group">
+      <button type="button" data-action="bold"><span><b>B</b></span> Bold</button>
+      <button type="button" data-action="italic"><span><i>I</i></span> Italic</button>
+      <button type="button" data-action="h2"><span>H2</span> Heading 2</button>
+      <button type="button" data-action="h3"><span>H3</span> Heading 3</button>
+      <button type="button" data-action="p"><span>P</span> Paragraph</button>
+      <button type="button" data-action="quote"><span>❝</span> Quote</button>
+      <button type="button" data-action="list"><span>•</span> Bullet list</button>
+      <button type="button" data-action="link"><span>↗</span> Insert link</button>
+    </div>
+    <div class="context-divider"></div>
+    <div class="context-group">
+      <button type="button" data-action="image"><span>▧</span> Insert image</button>
+      <button type="button" data-action="x"><span>𝕏</span> Insert X post</button>
+      <button type="button" data-action="youtube"><span>▶</span> Insert YouTube</button>
+      <button type="button" data-action="widget"><span>&lt;/&gt;</span> Insert widget block</button>
+      <button type="button" data-action="paste"><span>T</span> Paste text</button>
+    </div>
   </div>
 </div>
 
@@ -21,6 +34,14 @@ const {target="editor"}=Astro.props;
     const editor = document.getElementById(targetId);
     const menu = root.querySelector("[data-context-menu]");
     const fileInput = root.querySelector(".editor-context-file");
+    const boldAction = root.querySelector('[data-action="bold"]');
+    const italicAction = root.querySelector('[data-action="italic"]');
+    const h2Action = root.querySelector('[data-action="h2"]');
+    const h3Action = root.querySelector('[data-action="h3"]');
+    const pAction = root.querySelector('[data-action="p"]');
+    const quoteAction = root.querySelector('[data-action="quote"]');
+    const listAction = root.querySelector('[data-action="list"]');
+    const linkAction = root.querySelector('[data-action="link"]');
     const imageAction = root.querySelector('[data-action="image"]');
     const xAction = root.querySelector('[data-action="x"]');
     const youtubeAction = root.querySelector('[data-action="youtube"]');
@@ -81,6 +102,42 @@ const {target="editor"}=Astro.props;
       }));
     };
 
+    const restoreSelection = () => {
+      if (!savedRange) return false;
+      if (!editor.contains(savedRange.commonAncestorContainer)) return false;
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(savedRange);
+      editor.focus();
+      return true;
+    };
+
+    const runCommand = (command, value = null) => {
+      closeMenu();
+      restoreSelection();
+      document.execCommand(command, false, value);
+      saveSelection();
+      editor.dispatchEvent(new InputEvent("input", {
+        bubbles: true,
+        inputType: "formatBlock",
+        data: null
+      }));
+      editor.focus();
+    };
+
+    boldAction?.addEventListener("click", () => runCommand("bold"));
+    italicAction?.addEventListener("click", () => runCommand("italic"));
+    h2Action?.addEventListener("click", () => runCommand("formatBlock", "h2"));
+    h3Action?.addEventListener("click", () => runCommand("formatBlock", "h3"));
+    pAction?.addEventListener("click", () => runCommand("formatBlock", "p"));
+    quoteAction?.addEventListener("click", () => runCommand("formatBlock", "blockquote"));
+    listAction?.addEventListener("click", () => runCommand("insertUnorderedList"));
+    linkAction?.addEventListener("click", () => {
+      const url = window.prompt("Paste the link URL:", "https://");
+      if (!url) return;
+      runCommand("createLink", url.trim());
+    });
+
     const showMenu = (event) => {
       event.preventDefault();
       saveSelection();
@@ -124,7 +181,8 @@ const {target="editor"}=Astro.props;
 
       const url = urlMatch[0].split("?")[0].split("#")[0];
       const wrap = document.createElement("div");
-      wrap.className = "x-embed";
+      wrap.className = "x-embed protected-block";
+      wrap.contentEditable = "false";
       wrap.style.width = "100%";
       wrap.style.display = "flex";
       wrap.style.justifyContent = "center";
@@ -165,7 +223,8 @@ const {target="editor"}=Astro.props;
       }
 
       const wrap = document.createElement("div");
-      wrap.className = "youtube-embed";
+      wrap.className = "youtube-embed protected-block";
+      wrap.contentEditable = "false";
       wrap.style.margin = "20px auto";
       wrap.style.position = "relative";
       wrap.style.width = "100%";
@@ -197,7 +256,8 @@ const {target="editor"}=Astro.props;
       const value = window.prompt("Paste the widget / embed HTML code:", "");
       if (!value) return;
       const wrap = document.createElement("div");
-      wrap.className = "widget-embed";
+      wrap.className = "widget-embed protected-block";
+      wrap.contentEditable = "false";
       wrap.style.width = "100%";
       wrap.style.display = "flex";
       wrap.style.justifyContent = "center";
@@ -271,6 +331,8 @@ const {target="editor"}=Astro.props;
         image.style.display = "block";
 
         const figure = document.createElement("figure");
+        figure.className = "protected-block";
+        figure.contentEditable = "false";
         figure.style.margin = "18px auto";
         figure.style.width = "100%";
         figure.style.textAlign = "center";
@@ -322,8 +384,14 @@ const {target="editor"}=Astro.props;
     text-align:left;
     cursor:pointer;
   }
+  .context-group{display:grid;gap:2px}
+  .context-divider{height:1px;background:var(--line);margin:5px 2px}
   .editor-context-menu button:hover{
     background:var(--panel2);
+  }
+  .protected-block{
+    user-select:none;
+    cursor:default;
   }
   .editor-context-menu button span{
     width:18px;
