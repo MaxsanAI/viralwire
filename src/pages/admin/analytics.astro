@@ -4,10 +4,13 @@ import {referrerLabel} from "../../lib/analytics";
 if(Astro.cookies.get("vw_admin")?.value!=="1") return Astro.redirect("/admin/login");
 
 const db=Astro.locals.runtime?.env?.DB;
-let pageviews=0,countries:any[]=[],referrers:any[]=[],topPages:any[]=[],recent:any[]=[],ready=false;
+let pageviews=0,todayViews=0,sevenDayViews=0,monthViews=0,countries:any[]=[],referrers:any[]=[],topPages:any[]=[],recent:any[]=[],ready=false;
 if(db){
   try{
-    const now=Date.now(),since=new Date(now-30*86400000).toISOString();
+    const now=Date.now();
+    const today=new Date(now-24*60*60*1000).toISOString();
+    const sevenDays=new Date(now-7*24*60*60*1000).toISOString();
+    const month=new Date(now-30*24*60*60*1000).toISOString();
     await db.prepare(`CREATE TABLE IF NOT EXISTS analytics_pageviews(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       path TEXT NOT NULL,
@@ -15,13 +18,22 @@ if(db){
       referrer TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL
     )`).run();
-    const total=await db.prepare("SELECT COUNT(*) count FROM analytics_pageviews WHERE created_at>=?").bind(since).first();
-    pageviews=Number(total?.count||0);
-    const c=await db.prepare("SELECT country,COUNT(*) count FROM analytics_pageviews WHERE created_at>=? GROUP BY country ORDER BY count DESC LIMIT 15").bind(since).all();
+
+    const totals=await db.batch([
+      db.prepare("SELECT COUNT(*) count FROM analytics_pageviews WHERE created_at>=?").bind(today),
+      db.prepare("SELECT COUNT(*) count FROM analytics_pageviews WHERE created_at>=?").bind(sevenDays),
+      db.prepare("SELECT COUNT(*) count FROM analytics_pageviews WHERE created_at>=?").bind(month)
+    ]);
+    todayViews=Number(totals[0]?.results?.[0]?.count||0);
+    sevenDayViews=Number(totals[1]?.results?.[0]?.count||0);
+    pageviews=Number(totals[2]?.results?.[0]?.count||0);
+    monthViews=pageviews;
+
+    const c=await db.prepare("SELECT country,COUNT(*) count FROM analytics_pageviews WHERE created_at>=? GROUP BY country ORDER BY count DESC LIMIT 15").bind(month).all();
     countries=c.results||[];
-    const rr=await db.prepare("SELECT referrer,COUNT(*) count FROM analytics_pageviews WHERE created_at>=? GROUP BY referrer ORDER BY count DESC LIMIT 15").bind(since).all();
+    const rr=await db.prepare("SELECT referrer,COUNT(*) count FROM analytics_pageviews WHERE created_at>=? GROUP BY referrer ORDER BY count DESC LIMIT 15").bind(month).all();
     referrers=(rr.results||[]).map((x:any)=>({...x,label:referrerLabel(String(x.referrer||""))}));
-    const pp=await db.prepare("SELECT path,COUNT(*) count FROM analytics_pageviews WHERE created_at>=? GROUP BY path ORDER BY count DESC LIMIT 20").bind(since).all();
+    const pp=await db.prepare("SELECT path,COUNT(*) count FROM analytics_pageviews WHERE created_at>=? GROUP BY path ORDER BY count DESC LIMIT 20").bind(month).all();
     topPages=pp.results||[];
     const rec=await db.prepare("SELECT title,category,views,published_at FROM stories WHERE status='published' ORDER BY views DESC LIMIT 15").all();
     recent=rec.results||[];
@@ -35,9 +47,18 @@ if(db){
   <div class="wrap admin-grid">
     <aside class="admin-side"><a href="/admin">Dashboard</a><a href="/admin/analytics">Analytics</a><a href="/admin/new">New Story</a><a href="/admin/newsletter">Newsletter</a><a href="/">View Site</a><a href="/api/admin/logout">Log out</a></aside>
     <main>
-      <div class="section-head"><div><div class="eyebrow">TRAFFIC</div><h2>Analytics</h2><div class="muted">Last 30 days</div></div></div>
+      <div class="section-head"><div><div class="eyebrow">TRAFFIC</div><h2>Analytics</h2><div class="muted">Live first-party traffic from Cloudflare D1</div></div></div>
       {!ready ? <div class="panel"><strong>Analytics are not available yet.</strong><p class="muted">Publish or open a page after deployment to start collecting data.</p></div> : <div>
-        <div class="grid stats"><div class="panel"><div class="muted">Pageviews</div><strong>{pageviews.toLocaleString()}</strong></div><div class="panel"><div class="muted">Countries</div><strong>{countries.length}</strong></div><div class="panel"><div class="muted">Tracked referrers</div><strong>{referrers.length}</strong></div></div>
+        <div class="grid stats">
+          <div class="panel"><div class="muted">Today</div><strong>{todayViews.toLocaleString()}</strong><small>last 24 hours</small></div>
+          <div class="panel"><div class="muted">Last 7 days</div><strong>{sevenDayViews.toLocaleString()}</strong><small>rolling 7 days</small></div>
+          <div class="panel"><div class="muted">Last 30 days</div><strong>{monthViews.toLocaleString()}</strong><small>rolling 30 days</small></div>
+        </div>
+        <div class="grid stats secondary">
+          <div class="panel"><div class="muted">Countries</div><strong>{countries.length}</strong><small>top 15 shown below</small></div>
+          <div class="panel"><div class="muted">Tracked referrers</div><strong>{referrers.length}</strong><small>top 15 shown below</small></div>
+          <div class="panel"><div class="muted">Pages tracked</div><strong>{topPages.length}</strong><small>top 20 shown below</small></div>
+        </div>
         <div class="analytics-grid">
           <section class="panel"><div class="panel-title">Traffic by country</div>{countries.length ? countries.map((x:any)=><div class="bar-row"><span>{x.country||"Unknown"}</span><strong>{Number(x.count).toLocaleString()}</strong></div>) : <p class="muted">No traffic yet.</p>}</section>
           <section class="panel"><div class="panel-title">Where visitors came from</div>{referrers.length ? referrers.map((x:any)=><div class="bar-row"><span>{x.label}</span><strong>{Number(x.count).toLocaleString()}</strong></div>) : <p class="muted">No referrer data yet.</p>}</section>
@@ -53,5 +74,5 @@ if(db){
 </Layout>
 
 <style>
-.stats{grid-template-columns:repeat(3,1fr);margin-bottom:18px}.stats strong{display:block;font:900 32px "Space Grotesk";margin-top:6px}.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.panel-title{font:800 16px "Space Grotesk";margin-bottom:14px}.bar-row,.page-row{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:12px}.bar-row:last-child,.page-row:last-child{border-bottom:0}.bar-row span,.page-row span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.page-row b{color:var(--accent);margin-right:5px}@media(max-width:720px){.stats{grid-template-columns:1fr}.analytics-grid{grid-template-columns:1fr}}
+.stats{grid-template-columns:repeat(3,1fr);margin-bottom:18px}.stats strong{display:block;font:900 32px "Space Grotesk";margin-top:6px}.stats small{display:block;margin-top:4px;color:var(--muted);font-size:10px}.secondary{margin-bottom:2px}.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.panel-title{font:800 16px "Space Grotesk";margin-bottom:14px}.bar-row,.page-row{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:12px}.bar-row:last-child,.page-row:last-child{border-bottom:0}.bar-row span,.page-row span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.page-row b{color:var(--accent);margin-right:5px}@media(max-width:720px){.stats{grid-template-columns:1fr}.analytics-grid{grid-template-columns:1fr}}
 </style>
