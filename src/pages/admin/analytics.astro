@@ -1,0 +1,57 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import {referrerLabel} from "../../lib/analytics";
+if(Astro.cookies.get("vw_admin")?.value!=="1") return Astro.redirect("/admin/login");
+
+const db=Astro.locals.runtime?.env?.DB;
+let pageviews=0,countries:any[]=[],referrers:any[]=[],topPages:any[]=[],recent:any[]=[],ready=false;
+if(db){
+  try{
+    const now=Date.now(),since=new Date(now-30*86400000).toISOString();
+    await db.prepare(`CREATE TABLE IF NOT EXISTS analytics_pageviews(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      path TEXT NOT NULL,
+      country TEXT NOT NULL DEFAULT 'Unknown',
+      referrer TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL
+    )`).run();
+    const total=await db.prepare("SELECT COUNT(*) count FROM analytics_pageviews WHERE created_at>=?").bind(since).first();
+    pageviews=Number(total?.count||0);
+    const c=await db.prepare("SELECT country,COUNT(*) count FROM analytics_pageviews WHERE created_at>=? GROUP BY country ORDER BY count DESC LIMIT 15").bind(since).all();
+    countries=c.results||[];
+    const rr=await db.prepare("SELECT referrer,COUNT(*) count FROM analytics_pageviews WHERE created_at>=? GROUP BY referrer ORDER BY count DESC LIMIT 15").bind(since).all();
+    referrers=(rr.results||[]).map((x:any)=>({...x,label:referrerLabel(String(x.referrer||""))}));
+    const pp=await db.prepare("SELECT path,COUNT(*) count FROM analytics_pageviews WHERE created_at>=? GROUP BY path ORDER BY count DESC LIMIT 20").bind(since).all();
+    topPages=pp.results||[];
+    const rec=await db.prepare("SELECT title,category,views,published_at FROM stories WHERE status='published' ORDER BY views DESC LIMIT 15").all();
+    recent=rec.results||[];
+    ready=true;
+  }catch{}
+}
+---
+<Layout title="Analytics — VIRALWIRE" noindex>
+<div class="admin-shell">
+  <div class="wrap admin-nav"><a class="logo" href="/">VIRAL<span>WIRE</span></a><span class="muted">Vault Control</span></div>
+  <div class="wrap admin-grid">
+    <aside class="admin-side"><a href="/admin">Dashboard</a><a href="/admin/analytics">Analytics</a><a href="/admin/new">New Story</a><a href="/admin/newsletter">Newsletter</a><a href="/">View Site</a><a href="/api/admin/logout">Log out</a></aside>
+    <main>
+      <div class="section-head"><div><div class="eyebrow">TRAFFIC</div><h2>Analytics</h2><div class="muted">Last 30 days</div></div></div>
+      {!ready ? <div class="panel"><strong>Analytics are not available yet.</strong><p class="muted">Publish or open a page after deployment to start collecting data.</p></div> : <div>
+        <div class="grid stats"><div class="panel"><div class="muted">Pageviews</div><strong>{pageviews.toLocaleString()}</strong></div><div class="panel"><div class="muted">Countries</div><strong>{countries.length}</strong></div><div class="panel"><div class="muted">Tracked referrers</div><strong>{referrers.length}</strong></div></div>
+        <div class="analytics-grid">
+          <section class="panel"><div class="panel-title">Traffic by country</div>{countries.length ? countries.map((x:any)=><div class="bar-row"><span>{x.country||"Unknown"}</span><strong>{Number(x.count).toLocaleString()}</strong></div>) : <p class="muted">No traffic yet.</p>}</section>
+          <section class="panel"><div class="panel-title">Where visitors came from</div>{referrers.length ? referrers.map((x:any)=><div class="bar-row"><span>{x.label}</span><strong>{Number(x.count).toLocaleString()}</strong></div>) : <p class="muted">No referrer data yet.</p>}</section>
+        </div>
+        <div class="analytics-grid">
+          <section class="panel"><div class="panel-title">Most visited pages</div>{topPages.length ? topPages.map((x:any)=><div class="page-row"><span>{x.path}</span><strong>{Number(x.count).toLocaleString()}</strong></div>) : <p class="muted">No pageviews yet.</p>}</section>
+          <section class="panel"><div class="panel-title">Most read stories</div>{recent.length ? recent.map((x:any,i:number)=><div class="page-row"><span><b>{i+1}</b> {x.title}</span><strong>{Number(x.views||0).toLocaleString()}</strong></div>) : <p class="muted">No published stories yet.</p>}</section>
+        </div>
+      </div>}
+    </main>
+  </div>
+</div>
+</Layout>
+
+<style>
+.stats{grid-template-columns:repeat(3,1fr);margin-bottom:18px}.stats strong{display:block;font:900 32px "Space Grotesk";margin-top:6px}.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.panel-title{font:800 16px "Space Grotesk";margin-bottom:14px}.bar-row,.page-row{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:12px}.bar-row:last-child,.page-row:last-child{border-bottom:0}.bar-row span,.page-row span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.page-row b{color:var(--accent);margin-right:5px}@media(max-width:720px){.stats{grid-template-columns:1fr}.analytics-grid{grid-template-columns:1fr}}
+</style>
