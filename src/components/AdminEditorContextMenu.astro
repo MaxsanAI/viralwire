@@ -202,7 +202,24 @@ const {target="editor"}=Astro.props;
       wrap.style.display = "flex";
       wrap.style.justifyContent = "center";
       wrap.style.margin = "24px auto";
-      wrap.innerHTML = value;
+
+      // innerHTML does not execute <script> tags. Build the widget DOM manually
+      // and append each script so third-party widgets can initialize in the editor.
+      const template = document.createElement("template");
+      template.innerHTML = value.trim();
+      const fragment = template.content.cloneNode(true);
+      const scripts = Array.from(fragment.querySelectorAll("script"));
+
+      scripts.forEach((oldScript) => {
+        const script = document.createElement("script");
+        for (const attr of Array.from(oldScript.attributes)) {
+          script.setAttribute(attr.name, attr.value);
+        }
+        script.textContent = oldScript.textContent || "";
+        oldScript.replaceWith(script);
+      });
+
+      wrap.appendChild(fragment);
       insertAtSavedRange(wrap);
     });
 
