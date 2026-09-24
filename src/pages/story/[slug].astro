@@ -71,7 +71,27 @@ async function getPublishedStoriesForNext(locals:App.Locals,id:number){
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 <script>
 document.getElementById("copy")?.addEventListener("click",()=>navigator.clipboard.writeText(location.href));
+
+// Widget/embed code inserted through Vault Control is stored as HTML in D1.
+// Scripts inserted with innerHTML are inert, so recreate them here after the
+// article has been rendered. This lets third-party widgets initialize.
+const hydrateArticleWidgets=()=>{
+  const container=document.querySelector(".prose");
+  if(!container)return;
+  container.querySelectorAll("script").forEach((oldScript)=>{
+    if(oldScript.dataset.widgetHydrated==="1")return;
+    const newScript=document.createElement("script");
+    for(const attr of Array.from(oldScript.attributes)){
+      if(attr.name!=="data-widget-hydrated")newScript.setAttribute(attr.name,attr.value);
+    }
+    newScript.dataset.widgetHydrated="1";
+    newScript.textContent=oldScript.textContent||"";
+    oldScript.replaceWith(newScript);
+  });
+};
+
 const syncXTheme=()=>{const theme=document.documentElement.dataset.theme==="light"?"light":"dark";document.querySelectorAll(".twitter-tweet").forEach((el)=>el.setAttribute("data-theme",theme));};
+hydrateArticleWidgets();
 syncXTheme();
 new MutationObserver(()=>{syncXTheme();}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
 window.addEventListener("load",()=>{syncXTheme();window.twttr?.widgets?.load()});
@@ -90,6 +110,8 @@ document.querySelectorAll("[data-newsletter-form]").forEach((form)=>{
 });
 </script>
 <style>
+.widget-embed{width:100%;max-width:100%;margin:28px auto;display:flex;justify-content:center;align-items:center;overflow:hidden}
+.widget-embed iframe{max-width:100%;border:0}
 .x-embed{width:100%;max-width:550px;margin:32px auto;display:flex;justify-content:center}
 .x-embed .twitter-tweet{margin:0!important;max-width:100%!important}
 </style>
