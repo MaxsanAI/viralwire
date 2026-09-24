@@ -7,6 +7,8 @@ const {target="editor"}=Astro.props;
     <button type="button" data-action="image"><span>▧</span> Insert image</button>
     <button type="button" data-action="x"><span>𝕏</span> Insert X post</button>
     <button type="button" data-action="youtube"><span>▶</span> Insert YouTube</button>
+    <button type="button" data-action="widget"><span>&lt;/&gt;</span> Insert widget code</button>
+    <button type="button" data-action="paste"><span>T</span> Paste text</button>
   </div>
 </div>
 
@@ -22,6 +24,8 @@ const {target="editor"}=Astro.props;
     const imageAction = root.querySelector('[data-action="image"]');
     const xAction = root.querySelector('[data-action="x"]');
     const youtubeAction = root.querySelector('[data-action="youtube"]');
+    const widgetAction = root.querySelector('[data-action="widget"]');
+    const pasteAction = root.querySelector('[data-action="paste"]');
 
     let savedRange = null;
     let menuOpen = false;
@@ -82,7 +86,7 @@ const {target="editor"}=Astro.props;
       saveSelection();
 
       const width = 210;
-      const height = 132;
+      const height = 230;
       const left = Math.min(event.clientX, window.innerWidth - width - 8);
       const top = Math.min(event.clientY, window.innerHeight - height - 8);
 
@@ -121,6 +125,9 @@ const {target="editor"}=Astro.props;
       const url = urlMatch[0].split("?")[0].split("#")[0];
       const wrap = document.createElement("div");
       wrap.className = "x-embed";
+      wrap.style.width = "100%";
+      wrap.style.display = "flex";
+      wrap.style.justifyContent = "center";
       wrap.innerHTML =
         '<blockquote class="twitter-tweet" data-theme="dark" data-dnt="true"><a href="' +
         url +
@@ -159,7 +166,7 @@ const {target="editor"}=Astro.props;
 
       const wrap = document.createElement("div");
       wrap.className = "youtube-embed";
-      wrap.style.margin = "20px 0";
+      wrap.style.margin = "20px auto";
       wrap.style.position = "relative";
       wrap.style.width = "100%";
       wrap.style.aspectRatio = "16 / 9";
@@ -183,6 +190,35 @@ const {target="editor"}=Astro.props;
 
       wrap.appendChild(iframe);
       insertAtSavedRange(wrap);
+    });
+
+    widgetAction?.addEventListener("click", () => {
+      closeMenu();
+      const value = window.prompt("Paste the widget / embed HTML code:", "");
+      if (!value) return;
+      const wrap = document.createElement("div");
+      wrap.className = "widget-embed";
+      wrap.style.width = "100%";
+      wrap.style.display = "flex";
+      wrap.style.justifyContent = "center";
+      wrap.style.margin = "24px auto";
+      wrap.innerHTML = value;
+      insertAtSavedRange(wrap);
+    });
+
+    pasteAction?.addEventListener("click", async () => {
+      closeMenu();
+      try {
+        const text = await navigator.clipboard.readText();
+        if (!text) return;
+        const wrap = document.createElement("div");
+        wrap.className = "pasted-text";
+        wrap.style.whiteSpace = "pre-wrap";
+        wrap.textContent = text;
+        insertAtSavedRange(wrap);
+      } catch {
+        alert("Clipboard access was blocked by the browser. Click inside the article and use Ctrl+V instead.");
+      }
     });
 
     fileInput.addEventListener("change", async () => {
@@ -215,9 +251,12 @@ const {target="editor"}=Astro.props;
         image.loading = "lazy";
         image.style.maxWidth = "100%";
         image.style.height = "auto";
+        image.style.display = "block";
 
         const figure = document.createElement("figure");
-        figure.style.margin = "18px 0";
+        figure.style.margin = "18px auto";
+        figure.style.width = "100%";
+        figure.style.textAlign = "center";
         figure.appendChild(image);
 
         insertAtSavedRange(figure);
