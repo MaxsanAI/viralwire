@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="VIRALWIRE">
+  <defs>
+    <linearGradient id="g" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff3d81"/>
+      <stop offset="0.52" stop-color="#b44cff"/>
+      <stop offset="1" stop-color="#7c5cff"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="16" y1="10" x2="50" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".96"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity=".78"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity=".42"/>
+    </filter>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="#0d0f15" stroke="url(#g)" stroke-width="4" filter="url(#shadow)"/>
+  <path d="M15 18.5h7.2l4.2 18.1 4.6-14.3h5.9l4.5 14.3 4.3-18.1H53L46.4 45h-6.7l-5.8-15.8L28 45h-6.5z" fill="url(#shine)"/>
+  <path d="M14 49.5h36" stroke="url(#g)" stroke-width="3.5" stroke-linecap="round"/>
+</svg>
